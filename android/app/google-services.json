@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "729613267100",
+    "firebase_url": "https://tripa-smart.firebaseio.com",
+    "project_id": "tripa-smart",
+    "storage_bucket": "tripa-smart.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:729613267100:android:7c9aa48a3c30c9c5d47d59",
+        "android_client_info": {
+          "package_name": "com.tripa"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "729613267100-013087in9no152ajq57icfvsi0s0t3o9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCOXwUJzZRxqFVCexjlgXns0_2s-LWjaoY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "729613267100-013087in9no152ajq57icfvsi0s0t3o9.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

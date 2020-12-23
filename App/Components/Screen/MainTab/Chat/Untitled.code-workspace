@@ -1,0 +1,13 @@
+{
+  "folders": [
+	{
+		"path": "../../../../.."
+	},
+	{
+		"path": "../../../../../../../App_agus"
+	}
+],
+  "settings": {
+    "java.configuration.updateBuildConfiguration": "automatic"
+  }
+}

@@ -1,0 +1,694 @@
+import React, { Component } from "react";
+import { withNavigation } from "react-navigation";
+import RBSheet from "react-native-raw-bottom-sheet";
+import OTPInputView from "@twotalltotems/react-native-otp-input";
+
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
+
+import { Content, Container } from "native-base";
+
+import { Header } from "react-native-elements";
+
+import { postDataWitHeader, getDataWithHeader } from "./../../../Services";
+
+import { getValue, removeValue } from "./../../../Modules/LocalData";
+import ApiEndPoint from "./../../../Modules/Utils/ApiEndPoint";
+import CountDown from "react-native-countdown-component";
+import moment from "moment";
+
+class VerifOtp extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      message: "",
+      codeOtp: "",
+      visibleBtn: true,
+      counter: 30,
+      phone: this.props.navigation.getParam("phone"),
+    };
+  }
+
+  componentDidMount() {
+    console.log(
+      "PHONE_OTP",
+      this.state.phone.substring(0, this.state.phone.length - 3) + "xxx"
+    );
+  }
+
+  backToHome = () => {
+    this.props.navigation.goBack();
+  };
+  verifNoHpAction = () => {
+    this.RBSheetLoadVerifNum.open();
+
+    getValue("userData").then((response) => {
+      if (response.data.id != null && response.access_token != null) {
+        const dataRest = getDataWithHeader(
+          ApiEndPoint.base_url +
+            "/users/" +
+            response.data.id +
+            "/phone-verification2",
+          response.access_token
+        );
+        dataRest
+          .then((res) => {
+            if (res.success) {
+              this.RBSheetLoadVerifNum.close();
+              this.setState(
+                {
+                  errorHit: false,
+                },
+                () => {
+                  setTimeout(() => {
+                    this.RBSheetLoadVerifSuccess.open();
+                  }, 1000);
+                  setTimeout(() => {
+                    this.RBSheetLoadVerifSuccess.close();
+                  }, 4000);
+                  setTimeout(() => {
+                    this.kirimUlang();
+                  }, 5000);
+                }
+              );
+            }
+          })
+          .catch((err) => {
+            this.RBSheetLoadVerifNum.close();
+            this.setState(
+              {
+                errorHit: true,
+                phoneAlready: "Terjadi Kendala Teknis, Tutup dan Coba Lagi",
+              },
+              () => {
+                setTimeout(() => {
+                  this.RBSheetLoadVerifSuccess.open();
+                }, 1000);
+              }
+            );
+          });
+      }
+    });
+  };
+  rbSheetVerifSucces = () => {
+    return (
+      <RBSheet
+        ref={(ref) => {
+          this.RBSheetLoadVerifSuccess = ref;
+        }}
+        height={200}
+        closeOnPressMask={false}
+        duration={250}
+        customStyles={{
+          container: {
+            justifyContent: "center",
+          },
+        }}
+      >
+        {this.state.errorHit != false ? (
+          <View style={styles.BSView}>
+            <Image
+              style={{ width: 80, height: 80, resizeMode: "contain" }}
+              source={require("./../../../assets/image/img_warning.png")}
+            />
+            <Text style={{ marginTop: 10 }}>{this.state.phoneAlready}</Text>
+            <TouchableOpacity
+              onPress={() => this.RBSheetLoadVerifSuccess.close()}
+            >
+              <View
+                style={{
+                  marginTop: 10,
+                  marginBottom: 20,
+                  paddingVertical: 5,
+                  paddingHorizontal: 10,
+                  borderColor: "red",
+                  borderRadius: 7,
+                  borderWidth: 2,
+                }}
+              >
+                <Text
+                  style={{
+                    color: "red",
+                    fontSize: 16,
+                    fontWeight: "bold",
+                  }}
+                >
+                  Tutup
+                </Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View style={styles.BSView}>
+            <Image
+              style={{ width: 80, height: 80, resizeMode: "contain" }}
+              source={require("./../../../assets/image/img_check_success.png")}
+            />
+            <Text style={{ marginTop: 10 }}>Berhasil memuat...</Text>
+          </View>
+        )}
+      </RBSheet>
+    );
+  };
+
+  rbSheetVerifNumber = () => {
+    return (
+      <RBSheet
+        ref={(ref) => {
+          this.RBSheetLoadVerifNum = ref;
+        }}
+        height={200}
+        closeOnPressMask={false}
+        duration={250}
+        customStyles={{
+          container: {
+            justifyContent: "center",
+          },
+        }}
+      >
+        <View style={styles.BSView}>
+          <ActivityIndicator size="large" color="#FF8033" />
+          <Text style={{ marginTop: 10 }}>Sedang memuat...</Text>
+        </View>
+      </RBSheet>
+    );
+  };
+
+  sumbitNoHpAction = () => {
+    this.RBSheetLoadKonfirm.open();
+    if (this.state.codeOtp.length >= 4) {
+      getValue("userData").then((response) => {
+        if (response.data.id != null && response.access_token != null) {
+          let params = {
+            // user_id: user_id.data.id,
+            otp: this.state.codeOtp,
+          };
+
+          const dataRest = postDataWitHeader(
+            ApiEndPoint.base_url +
+              "/users/" +
+              response.data.id +
+              "/verify-phone",
+            params,
+            response.access_token
+          );
+          dataRest
+            .then((res) => {
+              setTimeout(() => {
+                this.RBSheetLoadKonfirm.close();
+                this.setState(
+                  {
+                    codeOtp: "",
+                    message: "Verifikasi Nomor Telepon Berhasil",
+                  },
+                  () => {
+                    this.RBSheetSuceesMemuat.open();
+                  },
+                  1000
+                );
+              });
+            })
+            .catch((err) => {
+              this.RBSheetLoadKonfirm.close();
+              if (err.response) {
+                setTimeout(() => {
+                  this.setState(
+                    {
+                      codeOtp: "",
+                      message: err.response.data.error.message,
+                    },
+                    () => {
+                      this.RBSheetGagalMemuat.open();
+                    }
+                  );
+                }, 1000);
+              } else if (err.request) {
+                setTimeout(() => {
+                  this.setState(
+                    {
+                      codeOtp: "",
+                      message: err.request._response,
+                    },
+                    () => {
+                      this.RBSheetGagalMemuat.open();
+                    }
+                  );
+                }, 1000);
+              } else {
+                setTimeout(() => {
+                  this.setState(
+                    {
+                      codeOtp: "",
+                      message:
+                        "Tidak ada koneksi internet, Tutup dan coba lagi!!",
+                    },
+                    () => {
+                      this.RBSheetGagalMemuat.open();
+                    }
+                  );
+                }, 1000);
+              }
+            });
+        }
+      });
+    } else {
+      setTimeout(() => {
+        this.RBSheetLoadKonfirm.close();
+      }, 1000);
+      setTimeout(() => {
+        this.setState(
+          {
+            codeOtp: "",
+            message: "Masukkan Nomor OTP dengan benar,  coba lagi!",
+          },
+          () => {
+            this.RBSheetGagalMemuat.open();
+          }
+        );
+      }, 1500);
+    }
+  };
+
+  kirimUlang = () => {
+    this.setState({ counter: 30 });
+    this.setState({ visibleBtn: true });
+    console.log("Kirim Ulang", this.state.counter);
+  };
+
+  goBackSuccess = () => {
+    this.RBSheetSuceesMemuat.close();
+    setTimeout(() => {
+      this.props.navigation.goBack();
+    }, 1000);
+  };
+
+  rbSheetLoadKonfirm = () => {
+    return (
+      <RBSheet
+        ref={(ref) => {
+          this.RBSheetLoadKonfirm = ref;
+        }}
+        height={200}
+        closeOnPressMask={false}
+        duration={250}
+        customStyles={{
+          container: {
+            justifyContent: "center",
+          },
+        }}
+      >
+        <View style={styles.BSView}>
+          <ActivityIndicator size="large" color="#FF8033" />
+          <Text style={{ marginTop: 10 }}>Sedang memuat...</Text>
+        </View>
+      </RBSheet>
+    );
+  };
+
+  rbSheetSuccesKonfirm = () => {
+    return (
+      <RBSheet
+        ref={(ref) => {
+          this.RBSheetSuceesMemuat = ref;
+        }}
+        height={200}
+        closeOnPressMask={false}
+        duration={250}
+        customStyles={{
+          container: {
+            justifyContent: "center",
+          },
+        }}
+      >
+        <View style={styles.BSView}>
+          <Image
+            style={{ width: 80, height: 80, resizeMode: "contain" }}
+            source={require("./../../../assets/image/img_check_success.png")}
+          />
+          <Text style={{ marginVertical: 10 }}>{this.state.message}</Text>
+          <TouchableOpacity onPress={this.goBackSuccess}>
+            <View
+              style={{
+                marginTop: 10,
+                marginBottom: 20,
+                paddingVertical: 5,
+                paddingHorizontal: 10,
+                borderColor: "#FF8033",
+                borderRadius: 7,
+                borderWidth: 2,
+              }}
+            >
+              <Text
+                style={{
+                  color: "#FF8033",
+                  fontSize: 16,
+                  fontWeight: "bold",
+                }}
+              >
+                Done
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+      </RBSheet>
+    );
+  };
+
+  rbSheetGagalKonfirm = () => {
+    return (
+      <RBSheet
+        ref={(ref) => {
+          this.RBSheetGagalMemuat = ref;
+        }}
+        height={200}
+        closeOnPressMask={false}
+        duration={250}
+        customStyles={{
+          container: {
+            justifyContent: "center",
+          },
+        }}
+      >
+        <View style={styles.BSView}>
+          <Image
+            style={{ width: 80, height: 80, resizeMode: "contain" }}
+            source={require("./../../../assets/image/img_warning.png")}
+          />
+          <Text style={{ marginVertical: 10 }}>{this.state.message}</Text>
+          <TouchableOpacity onPress={() => this.RBSheetGagalMemuat.close()}>
+            <View
+              style={{
+                marginTop: 10,
+                marginBottom: 20,
+                paddingVertical: 5,
+                paddingHorizontal: 10,
+                borderColor: "red",
+                borderRadius: 7,
+                borderWidth: 2,
+              }}
+            >
+              <Text
+                style={{
+                  color: "red",
+                  fontSize: 16,
+                  fontWeight: "bold",
+                }}
+              >
+                Tutup
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+      </RBSheet>
+    );
+  };
+  renderBtn() {
+    // if (this.state.visibleBtn) {
+    return (
+      <View style={{ width: 200 }}>
+        <TouchableOpacity
+          style={{
+            width: "100%",
+            backgroundColor: "#FF8033",
+            borderRadius: 8,
+            paddingVertical: 14,
+            alignItems: "center",
+            marginBottom: 10,
+          }}
+          onPress={this.sumbitNoHpAction}
+        >
+          <Text style={{ color: "white", fontWeight: "bold", fontSize: 18 }}>
+            Konfirmasi
+          </Text>
+        </TouchableOpacity>
+        {!this.state.visibleBtn && (
+          <TouchableOpacity
+            style={{
+              width: "100%",
+              backgroundColor: "#FF8033",
+              borderRadius: 8,
+              paddingVertical: 14,
+              alignItems: "center",
+              marginTop: 20,
+            }}
+            onPress={this.verifNoHpAction}
+          >
+            <Text style={{ color: "white", fontWeight: "bold", fontSize: 18 }}>
+              Kirim Ulang
+            </Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    );
+    // } else {
+    //   return (
+    //     <TouchableOpacity
+    //       style={{
+    //         width: '100%',
+    //         backgroundColor: '#FF8033',
+    //         borderRadius: 8,
+    //         paddingVertical: 14,
+    //         alignItems: 'center',
+    //         marginTop: 20,
+    //       }}
+    //       onPress={this.verifNoHpAction}>
+    //       <Text style={{color: 'white', fontWeight: 'bold', fontSize: 18}}>
+    //         Kirim Ulang
+    //       </Text>
+    //     </TouchableOpacity>
+    //   );
+    // }
+  }
+
+  renderInputOTP() {
+    // if (this.state.visibleBtn) {
+    return (
+      <OTPInputView
+        pinCount={4}
+        autoFocusOnLoad
+        code={this.state.codeOtp}
+        style={{ width: "70%", height: 120 }}
+        codeInputFieldStyle={styles.underlineStyleBase}
+        onCodeChanged={(codeOtp) => {
+          this.setState({ codeOtp });
+        }}
+        codeInputHighlightStyle={styles.underlineStyleHighLighted}
+      />
+    );
+    // } else {
+    // return null;
+    // }
+  }
+
+  renderCountDown() {
+    if (this.state.visibleBtn) {
+      return (
+        <CountDown
+          id={"1"}
+          until={this.state.counter}
+          onFinish={() => this.setState({ visibleBtn: false })}
+          // onPress={() => alert('hello')}
+          size={20}
+          timeToShow={["M", "S"]}
+          digitStyle={{
+            backgroundColor: "#e3e4e6",
+            marginTop: 30,
+            marginBottom: 20,
+          }}
+          digitTxtStyle={{ color: "#1CC625" }}
+          timeLabels={{ m: "", s: "" }}
+        />
+      );
+    } else {
+      return (
+        <CountDown
+          id={"2"}
+          until={30}
+          // onFinish={() => this.setState({visibleBtn: false})}
+          // onPress={() => alert('hello')}
+          size={20}
+          timeToShow={["H", "M"]}
+          digitStyle={{
+            backgroundColor: "#e3e4e6",
+            marginTop: 30,
+            marginBottom: 20,
+          }}
+          digitTxtStyle={{ color: "red" }}
+          timeLabels={{ m: "", s: "" }}
+        />
+      );
+    }
+  }
+
+  render() {
+    return (
+      <Container>
+        <Header
+          leftComponent={{
+            icon: "arrow-back",
+            color: "#fff",
+            onPress: () => this.props.navigation.goBack(),
+          }}
+          centerComponent={{
+            text: "OTP Phone Number",
+            style: {
+              color: "#fff",
+              color: "white",
+              fontSize: 16,
+              fontWeight: "bold",
+            },
+          }}
+          containerStyle={{
+            backgroundColor: "#FF8033",
+            height: Platform.OS == "ios" ? 64 : 56,
+            paddingTop: 0,
+            position: "relative",
+          }}
+        />
+
+        <Content>
+          <View
+            style={{
+              flex: 1,
+              position: "relative",
+              paddingHorizontal: 40,
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            {this.renderCountDown()}
+            <Image
+              style={styles.imageOtp}
+              source={require("./../../../assets/image/img_otp.png")}
+            />
+            <Text style={styles.textDescOtp}>
+              Kode OTP berhasil dikirim ke nomor telepon dan email anda{" "}
+            </Text>
+            {this.renderInputOTP()}
+            {this.renderBtn()}
+          </View>
+          {this.rbSheetLoadKonfirm()}
+          {this.rbSheetGagalKonfirm()}
+          {this.rbSheetSuccesKonfirm()}
+          {this.rbSheetVerifSucces()}
+          {this.rbSheetVerifNumber()}
+        </Content>
+      </Container>
+    );
+  }
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    alignItems: "center",
+  },
+  containerOtp: {
+    flex: 1,
+    alignItems: "center",
+    marginTop: 86,
+  },
+  imageOtp: {
+    width: 200,
+    height: 200,
+    resizeMode: "cover",
+  },
+  bodyHeader: {
+    width: "100%",
+    alignItems: "center",
+    backgroundColor: "orange",
+  },
+  titleHeader: {
+    color: "white",
+    fontSize: 22,
+  },
+  btnSubmitNoHp: {
+    width: "100%",
+    color: "#fff",
+    paddingVertical: "4%",
+    borderRadius: 12,
+    alignItems: "center",
+    backgroundColor: "#0a61c3",
+  },
+  imageHeaderLeft: {
+    width: 32,
+    height: 32,
+  },
+  textDescOtp: {
+    marginTop: 16,
+    textAlign: "center",
+    fontSize: 18,
+    color: "#636363",
+  },
+  containBtnVerif: {
+    width: "100%",
+    justifyContent: "flex-end",
+    paddingHorizontal: 40,
+    paddingVertical: 40,
+  },
+  textBtnVerif: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
+  underlineStyleBase: {
+    width: 30,
+    height: 45,
+    borderWidth: 0,
+    borderBottomWidth: 3,
+    color: "#FF8033",
+    fontSize: 22,
+    borderColor: "#FF8033",
+  },
+  underlineStyleHighLighted: {
+    borderColor: "#FF8033",
+  },
+  BSView: {
+    alignItems: "center",
+    paddingHorizontal: "10%",
+  },
+  BSInfo: {
+    fontWeight: "bold",
+    fontSize: 20,
+    marginBottom: 6,
+    color: "#FF8033",
+  },
+  BSMessage: {
+    fontSize: 18,
+    marginBottom: 22,
+  },
+  BSOke: {
+    width: 100,
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#FF8033",
+    borderRadius: 12,
+    marginLeft: 10,
+    paddingVertical: 10,
+  },
+  BSClose: {
+    width: 100,
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#FF8033",
+    borderRadius: 12,
+    paddingVertical: 10,
+  },
+  BSCloseText: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#FF8033",
+  },
+  BSCLanjutText: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#0a61c3",
+  },
+});
+
+export default withNavigation(VerifOtp);

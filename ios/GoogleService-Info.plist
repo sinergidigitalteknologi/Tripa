@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>729613267100-3n7pihhj2ke0lbifqqs3ocpvock36f96.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.729613267100-3n7pihhj2ke0lbifqqs3ocpvock36f96</string>
+	<key>API_KEY</key>
+	<string>AIzaSyA0DY05izFtFb53HmvbZms9tTaOx1pB8NM</string>
+	<key>GCM_SENDER_ID</key>
+	<string>729613267100</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.lenna.tripa</string>
+	<key>PROJECT_ID</key>
+	<string>tripa-smart</string>
+	<key>STORAGE_BUCKET</key>
+	<string>tripa-smart.appspot.com</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:729613267100:ios:6137a7228b696409d47d59</string>
+	<key>DATABASE_URL</key>
+	<string>https://tripa-smart.firebaseio.com</string>
+</dict>
+</plist>
